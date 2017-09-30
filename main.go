@@ -8,8 +8,8 @@ import (
 	// "encoding/json"
 	"net/http"
 	// "io/ioutil"
-	// "gopkg.in/mgo.v2"
-	// "gopkg.in/mgo.v2/bson"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 ///Users/usuario/go/src/github.com/gorilla/mux/
@@ -33,7 +33,7 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(200)
 	w.Write([]byte("ok"))
 }
-
+//mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs
 //http://localhost:8080/api/v1/rooms/arrive_date/01-01-2017/leave_date/02-02-2017/city/05001/hosts/3/room_type/l
 func main(){
 	fmt.Println("start server 8080")
