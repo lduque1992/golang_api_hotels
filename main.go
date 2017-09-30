@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"os"
 	// "log"
-	// "encoding/json"
+	"encoding/json"
 	"net/http"
 	// "io/ioutil"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
-///Users/usuario/go/src/github.com/gorilla/mux/
 func HomeHandler(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(200)
 	w.Write([]byte("ok"))
@@ -25,13 +24,43 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 	city := vars["city"]
 	hosts := vars["hosts"]
 	roomType := vars["roomType"]
+	println("searching.--.....----.")
 	println("arriveDate",arriveDate)
 	println("leaveDate",leaveDate)
 	println("city",city)
 	println("hosts",hosts)
 	println("roomType",roomType)
+	
+
+	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
+	if err != nil {
+			panic(err)
+	}
+	defer session.Close()
+
+	// Optional. Switch the session to a monotonic behavior.
+	session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("heroku_4r2js6cs").C("rooms")
+
+	// result := Room{}
+	var roomsObj []bson.M
+	err = c.Find(bson.M{"room_type": roomType, "city":city, "available":true}).All(&roomsObj)
+	if err != nil {
+		w.WriteHeader(404)
+		w.Write([]byte("not found"))
+		return
+	}
+	respuesta, err :=  json.Marshal(roomsObj)
+	if err != nil {
+		w.WriteHeader(405)
+		w.Write([]byte("unable to get room"))
+		return
+	}
+	
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	w.Write([]byte("ok"))
+	w.Write(respuesta)
 }
 //mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs
 //http://localhost:8080/api/v1/rooms/arrive_date/01-01-2017/leave_date/02-02-2017/city/05001/hosts/3/room_type/l
