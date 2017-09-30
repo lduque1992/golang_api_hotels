@@ -18,6 +18,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request){
 }
 func splitDate(date string)(retDate map[string]string){
 	dateArray := strings.Split(date, "-")
+	//implementar validaciones para saber si existen los 3 atributos de la fecha
 	retDate = map[string]string{
 		"day":dateArray[0],
 		"month":dateArray[1],
