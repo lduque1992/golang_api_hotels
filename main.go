@@ -7,26 +7,41 @@ import (
 	// "log"
 	"encoding/json"
 	"net/http"
-	// "io/ioutil"
+	"strings"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 func HomeHandler(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(200)
-	w.Write([]byte("ok"))
+	w.Write([]byte("udeain"))
 }
-
+func splitDate(date string)(retDate map[string]string){
+	dateArray := strings.Split(date, "-")
+	retDate = map[string]string{
+		"day":dateArray[0],
+		"month":dateArray[1],
+		"year":dateArray[2],
+	}
+	return
+}
 func getRooms(w http.ResponseWriter, r *http.Request){
 	vars := mux.Vars(r)
+	//split the arrive date to get all the info
 	arriveDate := vars["arriveDate"]
+	arriveDateObj := splitDate(arriveDate)
+
+	//split the arrive date to get all the info
 	leaveDate := vars["leaveDate"]
+	leaveDateObj := splitDate(leaveDate)
+
 	city := vars["city"]
 	hosts := vars["hosts"]
 	roomType := vars["roomType"]
+
 	println("searching.--.....----.")
-	println("arriveDate",arriveDate)
-	println("leaveDate",leaveDate)
+	println("arriveDate",arriveDateObj["year"],arriveDateObj["month"],arriveDateObj["day"])
+	println("leaveDate",leaveDateObj["year"],leaveDateObj["month"],leaveDateObj["day"])
 	println("city",city)
 	println("hosts",hosts)
 	println("roomType",roomType)
