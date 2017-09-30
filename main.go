@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"fmt"
+	"os"
 	// "log"
 	// "encoding/json"
 	"net/http"
@@ -41,5 +42,10 @@ func main(){
     r.HandleFunc("/api/v1/rooms/arrive_date/{arriveDate}/leave_date/{leaveDate}/city/{city}/hosts/{hosts}/room_type/{roomType}", getRooms).Methods("GET")
 	
 	http.Handle("/", r)
-	http.ListenAndServe("0.0.0.0:8080", nil)
+	port := os.Getenv("PORT")
+	
+	if port == "" {
+		port = "8080"
+	}
+	http.ListenAndServe("0.0.0.0:"+port, nil)
 }
