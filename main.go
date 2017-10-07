@@ -14,6 +14,11 @@ import (
 
 type Room struct {
     Id   string
+	Room_type string
+}
+
+type RoomInfo struct {
+    Id   string
 	start_date string
 	end_date string
 }
@@ -112,12 +117,12 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	var rooms_info []Room
-    json.Unmarshal(respuesta, &rooms_info)
+	var rooms_data []Room
+	json.Unmarshal(respuesta, &rooms_data)
 
-	for item := range rooms_info{
+	for item := range rooms_data{
 		w.Write( []byte("Room")) 
-		w.Write( []byte(rooms_info[item].start_date) )
+		w.Write( []byte(rooms_data[item].Room_type) )
 	}
 	
 
