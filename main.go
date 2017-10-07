@@ -12,6 +12,12 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+type Room struct {
+    Id   string
+	start_date string
+	end_date string
+}
+
 func HomeHandler(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(200)
 	w.Write([]byte("udeain"))
@@ -78,13 +84,53 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 	w.WriteHeader(200)
 	w.Write(respuesta)
 }
+
+func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
+
+	city := "05001"
+	roomType := "s"
+
+	// establecer conexión
+	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
+	if err != nil {
+			panic(err)
+	}
+	defer session.Close()
+
+	c := session.DB("heroku_4r2js6cs").C("rooms_info")
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// filtro de resultados
+	var rooms []bson.M
+	err = c.Find(bson.M{"room_type": roomType, "city":city, "available":true}).All(&rooms)
+
+	respuesta, err :=  json.Marshal(rooms)
+	if err != nil {
+		w.WriteHeader(405)
+		w.Write([]byte("unable to get room"))
+		return
+	}
+
+	var rooms_info []Room
+    json.Unmarshal(respuesta, &rooms_info)
+
+	for item := range rooms_info{
+		w.Write( []byte("Room")) 
+		w.Write( []byte(rooms_info[item].start_date) )
+	}
+	
+
+}
+
 //mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs
 //http://localhost:8080/api/v1/rooms/arrive_date/01-01-2017/leave_date/02-02-2017/city/05001/hosts/3/room_type/l
 func main(){
 	fmt.Println("start server 8080")
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler).Methods("GET")
-    r.HandleFunc("/api/v1/rooms/arrive_date/{arriveDate}/leave_date/{leaveDate}/city/{city}/hosts/{hosts}/room_type/{roomType}", getRooms).Methods("GET")
+	r.HandleFunc("/api/v1/rooms/arrive_date/{arriveDate}/leave_date/{leaveDate}/city/{city}/hosts/{hosts}/room_type/{roomType}", getRooms).Methods("GET")
+	r.HandleFunc("/api/v1/rooms_info", getRoomsAvailable).Methods("GET")
 	
 	http.Handle("/", r)
 	port := os.Getenv("PORT")
