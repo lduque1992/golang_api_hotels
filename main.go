@@ -92,8 +92,8 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 
 func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
-	city := "05001"
-	roomType := "s"
+	/*city := "05001"
+	roomType := "s"*/
 
 	// establecer conexión
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
@@ -102,29 +102,29 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	}
 	defer session.Close()
 
-	c := session.DB("heroku_4r2js6cs").C("rooms_info")
+	collection := session.DB("heroku_4r2js6cs").C("rooms_info")
+	pipeline := []bson.M{ 			
+			bson.M{"$lookup": 
+				bson.M{ "from" :"rooms", "localField": "room_id", "foreignField": "id", "as": "rooms_details" }},
+			bson.M{"$lookup": 
+				bson.M{ "from" :"hotel", "localField": "hotel_id", "foreignField": "hotel_id", "as": "hotel_details" }},
+	}
+	pipe := collection.Pipe(pipeline)
+	resp := []bson.M{}
+	err = pipe.All(&resp)
 
-	w.Header().Set("Content-Type", "application/json")
 
-	// filtro de resultados
-	var rooms []bson.M
-	err = c.Find(bson.M{"room_type": roomType, "city":city, "available":true}).All(&rooms)
-
-	respuesta, err :=  json.Marshal(rooms)
+	respuesta, err :=  json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(405)
 		w.Write([]byte("unable to get room"))
 		return
 	}
-
-	var rooms_data []Room
-	json.Unmarshal(respuesta, &rooms_data)
-
-	for item := range rooms_data{
-		w.Write( []byte("Room")) 
-		w.Write( []byte(rooms_data[item].Room_type) )
-	}
 	
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(respuesta)
+
 
 }
 
