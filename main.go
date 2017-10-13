@@ -94,6 +94,8 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
 	city := "05001"
 	roomType := "s"
+	fecha_inicio := "2017-10-18"
+	//fecha_fin := "2017-10-19"
 
 	// establecer conexión
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
@@ -104,15 +106,20 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
 	collection := session.DB("heroku_4r2js6cs").C("rooms_info")
 	pipeline := []bson.M{  	
+		/* filtro de fechas */
+		bson.M{"$match": bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},	
+		//bson.M{"$match": bson.M{"start_date": bson.M{"$gte": fecha_fin} }},	
+		//bson.M{"$match": {"$or": [{bson.M{"end_date": bson.M{"$lte": fecha} }},{bson.M{"start_date": bson.M{"$gte": fecha} }}]} },	
+
 		/*Realizar 'Join' con documentos adicionales de hotel y datos de habitaciones*/			
 		bson.M{"$lookup": 
 			bson.M{ "from" :"rooms", "localField": "room_id", "foreignField": "id", "as": "rooms" }},			
 		bson.M{"$lookup": 
 			bson.M{ "from" :"hotel", "localField": "hotel_id", "foreignField": "hotel_id", "as": "hotel_details" }},
-		/* Realziar filtrado por tipo de habitación y ciudad*/	
+		/* Realizar filtrado por tipo de habitación y ciudad */	
 		{ "$unwind": "$rooms"},	
 		bson.M{"$match": bson.M{"rooms.room_type": roomType }},	
-		bson.M{"$match": bson.M{"rooms.city": city }},				
+		bson.M{"$match": bson.M{"rooms.city": city }},					
 	}
 	pipe := collection.Pipe(pipeline)
 	resp := []bson.M{}
