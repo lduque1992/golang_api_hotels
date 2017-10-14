@@ -97,7 +97,7 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	fecha_inicio := "2017-10-18"
 	//fecha_fin := "2017-10-19"
 	
-	roomType = r.Form.Get("room_type")
+	//roomType = r.Form.Get("room_type")
 
 	// establecer conexión
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
