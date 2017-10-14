@@ -109,7 +109,10 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 		/* filtro de fechas */
 		bson.M{"$match": bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},	
 		//bson.M{"$match": bson.M{"start_date": bson.M{"$gte": fecha_fin} }},	
-		//bson.M{"$match": {"$or": [{bson.M{"end_date": bson.M{"$lte": fecha} }},{bson.M{"start_date": bson.M{"$gte": fecha} }}]} },	
+		//bson.M{"$match": {"$or": [{bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},{bson.M{"start_date": bson.M{"$gte": fecha_fin} }}]} },	
+		//bson.M{"$match": bson.M{ "$or": [ bson.M{ "$lte": [ "end_date", fecha_inicio ] }, bson.M{ "$gte": [ "start_date", fecha_fin ] } ] } },
+
+		//{ "$or": [ { "$lte": [ "end_date", fecha_inicio ] }, { "$gte": [ "start_date", fecha_fin ] } ] }
 
 		/*Realizar 'Join' con documentos adicionales de hotel y datos de habitaciones*/			
 		bson.M{"$lookup": 
