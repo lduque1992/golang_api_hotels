@@ -10,7 +10,7 @@ import (
 	"strings"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/buger/jsonparser"
+	// "github.com/buger/jsonparser"
 	//"github.com/tidwall/sjson"
 )
 
@@ -174,15 +174,15 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	hotel_lat := "";
 	hotel_long := "";
 	
-	hotel_name, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_name")
-	hotel_thumb, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_thumbnail")
-	hotel_check_in, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"check_in")
-	hotel_check_out, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"check_out")
-	hotel_website, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_website")
+	// hotel_name, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_name")
+	// hotel_thumb, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_thumbnail")
+	// hotel_check_in, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"check_in")
+	// hotel_check_out, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"check_out")
+	// hotel_website, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_website")
 
-	hotel_address, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "address")
-	hotel_lat, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "lat")
-	hotel_long, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "long")
+	// hotel_address, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "address")
+	// hotel_lat, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "lat")
+	// hotel_long, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "long")
 	datos_hotel := map[string]string{"address": hotel_address, "lat": hotel_lat, "long": hotel_long}
 	
 	//fmt.Println( hotel_name )
