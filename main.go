@@ -195,28 +195,28 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	}
 
 	//Asignar variables al Json
-	datos[0]["hotel_name"] = hotel_name;
-	datos[0]["hotel_thumbnail"] = hotel_thumb;
-	datos[0]["check_in"] = hotel_check_in;
-	datos[0]["check_out"] = hotel_check_out;
-	datos[0]["hotel_website"] = hotel_website;
+	// datos[0]["hotel_name"] = hotel_name;
+	// datos[0]["hotel_thumbnail"] = hotel_thumb;
+	// datos[0]["check_in"] = hotel_check_in;
+	// datos[0]["check_out"] = hotel_check_out;
+	// datos[0]["hotel_website"] = hotel_website;
 
-	datos[0]["hotel_location"] = datos_hotel
+	// datos[0]["hotel_location"] = datos_hotel
 
 	/*var a = datos[0]["hotel_details"];
 	md, ok := a.(map[string]interface{})
 	fmt.Println( md["hotel_location"],ok )	*/
 
 	// borrar datos reasignados
-	datos[0]["hotel_details"] = nil;
+	// datos[0]["hotel_details"] = nil;
 
 	// borrar datos adicionales temporalmente para retornar el formato establecido (falta hacer una operración para sacar habitaciones de estos que se borran)
-	respuesta, err =  json.Marshal(datos[0]) ////////// 
-	if err != nil {
-		w.WriteHeader(405)
-		w.Write([]byte("unable to get room"))
-		return
-	}
+	// respuesta, err =  json.Marshal(datos[0]) ////////// 
+	// if err != nil {
+	// 	w.WriteHeader(405)
+	// 	w.Write([]byte("unable to get room"))
+	// 	return
+	// }
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
