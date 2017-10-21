@@ -78,7 +78,19 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte("not found"))
 		return
 	}
+	headerJson := []byte(`{`)
+	if city == "05001"{
+		cityInfo := []byte(`"hotel_id":"udeain_medellin","hotel_name":"udeain medellin", "hotel_location":{"address":"Cl. 5 Sur #42-2 a 42-70", "lat":"6.1992463", "long":"-75.5747155"},"hotel_thumbnail":"https://media-cdn.tripadvisor.com/media/photo-s/06/35/93/c2/hotel-el-deportista.jpg","check_in":"15:00","check_out":"13:00","hotel_website":"https://udeain.herokuapp.com", "rooms":`)
+		headerJson = append(headerJson[:], cityInfo...)
+	}else{
+		cityInfo := []byte(`"hotel_id":"udeain_bogota","hotel_name":"udeain bogota", "hotel_location":{"address":"Cra. 14 #82-2 a 82-98", "lat":"4.667662", "long":"-74.0574518"},"hotel_thumbnail":"https://media-cdn.tripadvisor.com/media/photo-s/06/35/93/c2/hotel-el-deportista.jpg","check_in":"15:00","check_out":"13:00","hotel_website":"https://udeain.herokuapp.com", "rooms":`)
+		headerJson = append(headerJson[:], cityInfo...)
+	}
 	respuesta, err :=  json.Marshal(roomsObj)
+	jsonEnd := []byte(`}`)
+	finalRes := append(headerJson[:], respuesta...)
+	finalRes = append(finalRes[:], jsonEnd...)
+	
 	if err != nil {
 		w.WriteHeader(405)
 		w.Write([]byte("unable to get room"))
@@ -87,7 +99,7 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	w.Write(respuesta)
+	w.Write(finalRes)
 }
 
 func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
@@ -130,7 +142,7 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	resp := []bson.M{}
 	err = pipe.All(&resp)
 
-
+	
 	respuesta, err :=  json.Marshal(resp)
 	if err != nil {
 		w.WriteHeader(405)
