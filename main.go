@@ -10,6 +10,8 @@ import (
 	"strings"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/buger/jsonparser"
+	//"github.com/tidwall/sjson"
 )
 
 type Room struct {
@@ -98,6 +100,9 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	//fecha_fin := "2017-10-19"
 	
 	//roomType = r.Form.Get("room_type")
+	roomType = r.URL.Query().Get("room_type")
+	fecha_inicio = r.URL.Query().Get("arrive_date")
+	city = r.URL.Query().Get("city")
 
 	// establecer conexión
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
@@ -137,7 +142,70 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte("unable to get room"))
 		return
 	}
+
+	//var a = jsonparser.GetInt(respuesta,"hotel_details", "[0]", "check_in")
 	
+
+	// asignar datos
+	//jsonparser.Set(respuesta, []byte(hotel_name), "[0]", "hotel_name")
+	//sjson.Set(`respuesta[0]`, "hotel_name", hotel_name)
+	//respuesta[0].hotel_name = hotel_name;
+	
+
+	// asignar datos de acuerdo al formato
+	hotel_name := "";
+	hotel_thumb := "";
+	hotel_check_in := "";
+	hotel_check_out := "";
+	hotel_website := "";
+	hotel_address := "";
+	hotel_lat := "";
+	hotel_long := "";
+	
+	hotel_name, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_name")
+	hotel_thumb, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_thumbnail")
+	hotel_check_in, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"check_in")
+	hotel_check_out, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"check_out")
+	hotel_website, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_website")
+
+	hotel_address, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "address")
+	hotel_lat, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "lat")
+	hotel_long, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "long")
+	datos_hotel := map[string]string{"address": hotel_address, "lat": hotel_lat, "long": hotel_long}
+	
+	//fmt.Println( hotel_name )
+
+	var datos []bson.M	
+	err = json.Unmarshal(respuesta, &datos)
+
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	//Asignar variables al Json
+	datos[0]["hotel_name"] = hotel_name;
+	datos[0]["hotel_thumbnail"] = hotel_thumb;
+	datos[0]["check_in"] = hotel_check_in;
+	datos[0]["check_out"] = hotel_check_out;
+	datos[0]["hotel_website"] = hotel_website;
+
+	datos[0]["hotel_location"] = datos_hotel
+
+	/*var a = datos[0]["hotel_details"];
+	md, ok := a.(map[string]interface{})
+	fmt.Println( md["hotel_location"],ok )	*/
+
+	// borrar datos reasignados
+	datos[0]["hotel_details"] = nil;
+
+	// borrar datos adicionales temporalmente para retornar el formato establecido (falta hacer una operración para sacar habitaciones de estos que se borran)
+	respuesta, err =  json.Marshal(datos[0]) ////////// 
+	if err != nil {
+		w.WriteHeader(405)
+		w.Write([]byte("unable to get room"))
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	w.Write(respuesta)
@@ -160,5 +228,6 @@ func main(){
 	if port == "" {
 		port = "8080"
 	}
-	http.ListenAndServe("0.0.0.0:"+port, nil)
+	//http.ListenAndServe("0.0.0.0:"+port, nil)
+	http.ListenAndServe(":"+port, nil)
 }
