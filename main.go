@@ -165,14 +165,14 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	
 
 	// asignar datos de acuerdo al formato
-	hotel_name := "";
-	hotel_thumb := "";
-	hotel_check_in := "";
-	hotel_check_out := "";
-	hotel_website := "";
-	hotel_address := "";
-	hotel_lat := "";
-	hotel_long := "";
+	// hotel_name := "";
+	// hotel_thumb := "";
+	// hotel_check_in := "";
+	// hotel_check_out := "";
+	// hotel_website := "";
+	// hotel_address := "";
+	// hotel_lat := "";
+	// hotel_long := "";
 	
 	// hotel_name, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_name")
 	// hotel_thumb, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_thumbnail")
@@ -183,7 +183,7 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	// hotel_address, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "address")
 	// hotel_lat, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "lat")
 	// hotel_long, err = jsonparser.GetString(respuesta, "[0]","hotel_details","[0]" ,"hotel_location", "long")
-	datos_hotel := map[string]string{"address": hotel_address, "lat": hotel_lat, "long": hotel_long}
+	// datos_hotel := map[string]string{"address": hotel_address, "lat": hotel_lat, "long": hotel_long}
 	
 	//fmt.Println( hotel_name )
 
