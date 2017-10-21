@@ -90,6 +90,9 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 	}
 	respuesta, err :=  json.Marshal(roomsObj)
 	jsonEnd := []byte(`}`)
+	if string(respuesta) == "null"{
+		respuesta = []byte(`[]`)
+	}
 	finalRes := append(headerJson[:], respuesta...)
 	finalRes = append(finalRes[:], jsonEnd...)
 	
