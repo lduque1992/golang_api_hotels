@@ -4,14 +4,12 @@ import (
 	"github.com/gorilla/mux"
 	"fmt"
 	"os"
-	// "log"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	// "github.com/buger/jsonparser"
-	//"github.com/tidwall/sjson"
+	"github.com/gorilla/handlers"
 )
 
 type Room struct {
@@ -259,6 +257,7 @@ func main(){
 	if port == "" {
 		port = "8080"
 	}
+	corsObj:=handlers.AllowedOrigins([]string{"*"})
 	//http.ListenAndServe("0.0.0.0:"+port, nil)
-	http.ListenAndServe(":"+port, nil)
+	http.ListenAndServe(":"+port, corsObj)
 }
