@@ -40,7 +40,10 @@ func splitDate(date string)(retDate map[string]string){
 	return
 }
 func getRooms(w http.ResponseWriter, r *http.Request){
+		
+	/*
 	vars := mux.Vars(r)
+	
 	//split the arrive date to get all the info
 	arriveDate := vars["arriveDate"]
 	arriveDateObj := splitDate(arriveDate)
@@ -51,15 +54,25 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 
 	city := vars["city"]
 	hosts := vars["hosts"]
-	roomType := vars["roomType"]
+	roomType := vars["roomType"] */
 
+	//city := "05001"
+
+
+	arriveDate := r.URL.Query().Get("arrive_date")
+	arriveDateObj := splitDate(arriveDate)
+	leaveDate := r.URL.Query().Get("leaveDate")
+	city := r.URL.Query().Get("city")
+	hosts := r.URL.Query().Get("hosts")
+	roomType := r.URL.Query().Get("room_type")
+	
 	println("searching.--.....----.")
 	println("arriveDate",arriveDateObj["year"],arriveDateObj["month"],arriveDateObj["day"])
-	println("leaveDate",leaveDateObj["year"],leaveDateObj["month"],leaveDateObj["day"])
+	//println("leaveDate",leaveDateObj["year"],leaveDateObj["month"],leaveDateObj["day"])
+	println("leaveDate",leaveDate)
 	println("city",city)
 	println("hosts",hosts)
-	println("roomType",roomType)
-	
+	println("roomType",roomType)	
 
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
 	if err != nil {
@@ -234,7 +247,10 @@ func main(){
 	fmt.Println("start server 8080")
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler).Methods("GET")
-	r.HandleFunc("/api/v1/rooms/arrive_date/{arriveDate}/leave_date/{leaveDate}/city/{city}/hosts/{hosts}/room_type/{roomType}", getRooms).Methods("GET")
+
+	//r.HandleFunc("/api/v1/rooms/arrive_date/{arriveDate}/leave_date/{leaveDate}/city/{city}/hosts/{hosts}/room_type/{roomType}", getRooms).Methods("GET")
+	r.HandleFunc("/api/v1/rooms", getRooms).Methods("GET")
+
 	r.HandleFunc("/api/v1/rooms_info", getRoomsAvailable).Methods("GET")
 	
 	http.Handle("/", r)
