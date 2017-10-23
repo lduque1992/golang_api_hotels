@@ -259,5 +259,5 @@ func main(){
 	}
 	corsObj:=handlers.AllowedOrigins([]string{"*"})
 	//http.ListenAndServe("0.0.0.0:"+port, nil)
-	http.ListenAndServe(":"+port, corsObj)
+	http.ListenAndServe(":"+port, handlers.CORS(corsObj)(r))
 }
