@@ -4,12 +4,14 @@ import (
 	"github.com/gorilla/mux"
 	"fmt"
 	"os"
+	// "log"
 	"encoding/json"
 	"net/http"
 	"strings"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/gorilla/handlers"
+	// "github.com/buger/jsonparser"
+	//"github.com/tidwall/sjson"
 )
 
 type Room struct {
@@ -297,7 +299,7 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
 
 	// insertar datos
-	id := collection.Insert(`{"arrive_date": "arrive_date"}`)
+	id := collection.Insert(`{"arrive_date": arrive_date}`)
 	println(id)
 
 	// retornar respuesta de reserva
@@ -328,7 +330,6 @@ func main(){
 	if port == "" {
 		port = "8080"
 	}
-	corsObj:=handlers.AllowedOrigins([]string{"*"})
 	//http.ListenAndServe("0.0.0.0:"+port, nil)
-	http.ListenAndServe(":"+port, handlers.CORS(corsObj)(r))
+	http.ListenAndServe(":"+port, nil)
 }
