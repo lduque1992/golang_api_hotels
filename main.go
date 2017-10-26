@@ -299,16 +299,18 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
 
 	// insertar datos
-	id := collection.Insert(bson.M{"start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id })
-	println(id)
+	id_reserva := bson.NewObjectId().Hex()
+	collection.Insert(bson.M{"_id": id_reserva, "start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id })
+	println(id_reserva)
 
 	// retornar respuesta de reserva
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	id_reserva := `{"reservation_id":` + `"105879484" }`
+	//info_reserva := `{"reservation_id":` + `"105879484" }`
+	info_reserva := `{"reservation_id": "` + id_reserva +  `"}`
 	
-	w.Write([]byte(id_reserva))
+	w.Write([]byte(info_reserva))
 	
 }
 
