@@ -10,6 +10,8 @@ import (
 	"strings"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
+	"strconv"
 	// "github.com/buger/jsonparser"
 	//"github.com/tidwall/sjson"
 )
@@ -253,8 +255,17 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
 	collection := session.DB("heroku_4r2js6cs").C("reservation")
 
-	jsonDatos := []byte(`{"arrive_date":"2017-10-25","leave_date":"2017-10-26","room_type":"s","capacity":1,"beds":{"simple":1,"double":0},"hotel_id":"udeain_medellin","user":{"doc_type":"string","doc_id":"string","email":"string","phone_number":"string"}}`)
-	
+	/*jsonDatos := []byte(`{"arrive_date":"2017-10-25","leave_date":"2017-10-26","room_type":"s","capacity":1,"beds":{"simple":1,"double":0},"hotel_id":"udeain_medellin",
+		"user":{"doc_type":"CC","doc_id":"11521777","email":"cjmo@gmail.com","phone_number":"4448787"}}`)*/
+
+	// Recibir datos Json enviados en solicitud POST	
+	jsonDatos, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	//println(string(jsonDatos))
+
+	// Procesar datos recibidos
     var raw map[string]interface{}
     json.Unmarshal(jsonDatos, &raw)
 	
@@ -266,7 +277,8 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	salida, _ = json.Marshal(raw["room_type"])
 	room_type := string(salida)
 	salida, _ = json.Marshal(raw["capacity"])
-	capacity := string(salida)	
+	capacity := string(salida)
+	capacity_number, err := strconv.Atoi(capacity)
 	salida, _ = json.Marshal(raw["hotel_id"])
 	hotel_id := string(salida)
 	salida, _ = json.Marshal(raw["beds"])
@@ -274,13 +286,14 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	salida, _ = json.Marshal(raw["user"])
 	user := string(salida)
 
-	println(arrive_date)
+	/*println(arrive_date)
 	println(leave_date)
 	println(room_type)
 	println(capacity)
 	println(hotel_id)
 	println(beds)
-	println(user)
+	println(user)*/
+	println(capacity_number)
 
 	// procesar subelemento 'beds'
 	var rawBeds map[string]interface{}
@@ -289,25 +302,47 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	beds_double := string(salida)
 	salida, _ = json.Marshal(rawBeds["simple"])
 	beds_simple := string(salida)
-	println(beds_double)
-	println(beds_simple)
+	/*println(beds_double)
+	println(beds_simple)*/
 
-	// validación de errores
-	//w.WriteHeader(409)
-	//w.Header().Set("Content-Type", "application/json")
-	//w.Write([]byte(`{"message" : "mensaje de error"}`))
+	// procesar subelemento 'user'
+	var rawUser map[string]interface{}
+	json.Unmarshal([]byte(user) , &rawUser)
+	salida, _ = json.Marshal(rawUser["doc_type"])
+	doc_type := string(salida)
+	salida, _ = json.Marshal(rawUser["doc_id"])
+	doc_id := string(salida)
+	salida, _ = json.Marshal(rawUser["email"])
+	email := string(salida)
+	salida, _ = json.Marshal(rawUser["phone_number"])
+	phone_number := string(salida)
+
+	//println(doc_type + " "+doc_id+" "+email+" "+phone_number)
+	
+	// validación de errores de datos en json recibido
+	if (arrive_date == "\"\"" || arrive_date == "null" || leave_date == "\"\"" || leave_date == "null" || room_type == "\"\"" || 
+		room_type == "null" || capacity == "null" || capacity_number <= 0 || hotel_id =="null" || hotel_id == "\"\""  ||
+		beds_double =="null" || beds_double == "\"\"" || beds_simple =="null" || beds_simple == "\"\"" ||
+		doc_type =="null" || doc_type == "\"\"" || doc_id =="null" || doc_id == "\"\"" || email =="null" || email == "\"\"" ||
+		phone_number =="null" || phone_number == "\"\"" ) {
+
+			w.WriteHeader(409)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`{"message" : "Los parámetros de la reserva no han sido especificados en su totalidad"}`))
+			return
+	}		
 
 
 	// insertar datos
 	id_reserva := bson.NewObjectId().Hex()
-	collection.Insert(bson.M{"_id": id_reserva, "start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id })
+	collection.Insert(bson.M{"_id": id_reserva, "start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id,
+	 "capacity": capacity_number, "beds_double": beds_double, "beds_simple": beds_simple, "doc_type": doc_type, "doc_id": doc_id, "email": email, "phone_number": phone_number	})
 	println(id_reserva)
 
 	// retornar respuesta de reserva
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	//info_reserva := `{"reservation_id":` + `"105879484" }`
 	info_reserva := `{"reservation_id": "` + id_reserva +  `"}`
 	
 	w.Write([]byte(info_reserva))
