@@ -299,7 +299,7 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
 
 	// insertar datos
-	id := collection.Insert(`{"arrive_date": arrive_date}`)
+	id := collection.Insert(bson.M{"start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id })
 	println(id)
 
 	// retornar respuesta de reserva
