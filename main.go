@@ -292,8 +292,8 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	println(capacity)
 	println(hotel_id)
 	println(beds)
-	println(user)*/
-	println(capacity_number)
+	println(user)
+	println(capacity_number)*/
 
 	// procesar subelemento 'beds'
 	var rawBeds map[string]interface{}
@@ -328,7 +328,7 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
 			w.WriteHeader(409)
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(`{"message" : "Los parámetros de la reserva no han sido especificados en su totalidad"}`))
+			w.Write([]byte(`{"message" : "Los parámetros de la reserva no han sido especificados en su totalidad, o presentan errores de formato"}`))
 			return
 	}		
 
