@@ -239,6 +239,77 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
 }
 
+func getReservationRequest(w http.ResponseWriter, r *http.Request){
+
+	// establecer conexión
+	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
+	if err != nil {
+			panic(err)
+	}
+	defer session.Close()
+	session.SetMode(mgo.Monotonic, true)
+
+	collection := session.DB("heroku_4r2js6cs").C("reservation")
+
+	jsonDatos := []byte(`{"arrive_date":"2017-10-25","leave_date":"2017-10-26","room_type":"s","capacity":1,"beds":{"simple":1,"double":0},"hotel_id":"udeain_medellin","user":{"doc_type":"string","doc_id":"string","email":"string","phone_number":"string"}}`)
+	
+    var raw map[string]interface{}
+    json.Unmarshal(jsonDatos, &raw)
+	
+	// obtener valor en particular  //arrive_date := raw["arrive_date"]
+	salida, _ := json.Marshal(raw["arrive_date"])
+	arrive_date := string(salida)
+	salida, _ = json.Marshal(raw["leave_date"])
+	leave_date := string(salida)
+	salida, _ = json.Marshal(raw["room_type"])
+	room_type := string(salida)
+	salida, _ = json.Marshal(raw["capacity"])
+	capacity := string(salida)	
+	salida, _ = json.Marshal(raw["hotel_id"])
+	hotel_id := string(salida)
+	salida, _ = json.Marshal(raw["beds"])
+	beds := string(salida)
+	salida, _ = json.Marshal(raw["user"])
+	user := string(salida)
+
+	println(arrive_date)
+	println(leave_date)
+	println(room_type)
+	println(capacity)
+	println(hotel_id)
+	println(beds)
+	println(user)
+
+	// procesar subelemento 'beds'
+	var rawBeds map[string]interface{}
+    json.Unmarshal([]byte(beds) , &rawBeds)
+	salida, _ = json.Marshal(rawBeds["double"])
+	beds_double := string(salida)
+	salida, _ = json.Marshal(rawBeds["simple"])
+	beds_simple := string(salida)
+	println(beds_double)
+	println(beds_simple)
+
+	// validación de errores
+	//w.WriteHeader(409)
+	//w.Header().Set("Content-Type", "application/json")
+	//w.Write([]byte(`{"message" : "mensaje de error"}`))
+
+
+	// insertar datos
+	id := collection.Insert(`{"arrive_date": "arrive_date"}`)
+	println(id)
+
+	// retornar respuesta de reserva
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	id_reserva := `{"reservation_id":` + `"105879484" }`
+	
+	w.Write([]byte(id_reserva))
+	
+}
+
 //mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs
 //http://localhost:8080/api/v1/rooms/arrive_date/01-01-2017/leave_date/02-02-2017/city/05001/hosts/3/room_type/l
 func main(){
@@ -248,8 +319,8 @@ func main(){
 
 	//r.HandleFunc("/api/v1/rooms/arrive_date/{arriveDate}/leave_date/{leaveDate}/city/{city}/hosts/{hosts}/room_type/{roomType}", getRooms).Methods("GET")
 	r.HandleFunc("/api/v1/rooms", getRooms).Methods("GET")
-
 	r.HandleFunc("/api/v1/rooms_info", getRoomsAvailable).Methods("GET")
+	r.HandleFunc("/api/v1/rooms/reserve", getReservationRequest).Methods("POST")
 	
 	http.Handle("/", r)
 	port := os.Getenv("PORT")
