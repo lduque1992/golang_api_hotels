@@ -11,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
+	"github.com/gorilla/handlers"
 	"strconv"
 	// "github.com/buger/jsonparser"
 	//"github.com/tidwall/sjson"
@@ -368,5 +369,7 @@ func main(){
 		port = "8080"
 	}
 	//http.ListenAndServe("0.0.0.0:"+port, nil)
-	http.ListenAndServe(":"+port, nil)
+	corsObj:=handlers.AllowedOrigins([]string{"*"})
+	http.ListenAndServe(":"+port, handlers.CORS(corsObj)(r))
+	// http.ListenAndServe(":"+port, nil)
 }
