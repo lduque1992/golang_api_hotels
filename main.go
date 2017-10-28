@@ -62,7 +62,7 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 
 	arriveDate := r.URL.Query().Get("arrive_date")
 	arriveDateObj := splitDate(arriveDate)
-	leaveDate := r.URL.Query().Get("leaveDate")
+	leaveDate := r.URL.Query().Get("leave_date")
 	city := r.URL.Query().Get("city")
 	hosts := r.URL.Query().Get("hosts")
 	roomType := r.URL.Query().Get("room_type")
@@ -89,7 +89,27 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 
 	// result := Room{}
 	var roomsObj []bson.M
-	err = c.Find(bson.M{"room_type": roomType, "city":city, "available":true}).All(&roomsObj)
+
+	///////////////////////////////////////
+	pipeline := []bson.M{  	
+		bson.M{"$match": bson.M{"room_type": roomType }},	
+		bson.M{"$match": bson.M{"city": city }},		
+
+		bson.M{"$lookup": 
+			bson.M{ "from" :"reservation", "localField": "id", "foreignField": "room_id", "as": "reservation" }},
+		{ "$unwind": bson.M{ "path": "$reservation","preserveNullAndEmptyArrays": true} },	
+		/* realizar filtro de fechas de reserva */	
+		bson.M{"$match": bson.M{ "$or": []bson.M{ bson.M{"reservation.start_date":bson.M{"$gte": leaveDate}}, bson.M{"reservation.end_date": bson.M{"$lte": arriveDate}}, bson.M{"reservation" : bson.M{"$eq": nil} } } } },			
+	}
+
+	pipe := c.Pipe(pipeline)
+	//resp := []bson.M{}
+	err = pipe.All(&roomsObj)	
+	//respuesta, err :=  json.Marshal(resp)
+
+	///////////////////////////////////////
+
+	//err = c.Find(bson.M{"room_type": roomType, "city":city, "available":true}).All(&roomsObj)
 	if err != nil {
 		w.WriteHeader(404)
 		w.Write([]byte("not found"))
@@ -332,7 +352,10 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
 	// realizar búsqueda de habitaciones disponibles
 	collection_rooms := session.DB("heroku_4r2js6cs").C("rooms")
-	pipeline := []bson.M{  					
+	pipeline := []bson.M{  	
+		bson.M{"$match": bson.M{"room_type": room_type }},	
+		bson.M{"$match": bson.M{"hotel_id": hotel_id }},
+
 		bson.M{"$lookup": 
 			bson.M{ "from" :"reservation", "localField": "id", "foreignField": "room_id", "as": "reservation" }},
 		{ "$unwind": bson.M{ "path": "$reservation","preserveNullAndEmptyArrays": true} },	
