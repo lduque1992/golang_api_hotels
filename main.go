@@ -13,8 +13,6 @@ import (
 	"io/ioutil"
 	"github.com/gorilla/handlers"
 	"strconv"
-	// "github.com/buger/jsonparser"
-	//"github.com/tidwall/sjson"
 )
 
 type Room struct {
@@ -68,6 +66,7 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 	city := r.URL.Query().Get("city")
 	hosts := r.URL.Query().Get("hosts")
 	roomType := r.URL.Query().Get("room_type")
+	roomType = strings.ToUpper(roomType)
 	
 	println("searching.--.....----.")
 	println("arriveDate",arriveDateObj["year"],arriveDateObj["month"],arriveDateObj["day"])
