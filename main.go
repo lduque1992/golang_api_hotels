@@ -128,12 +128,15 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	city := "05001"
 	roomType := "s"
 	fecha_inicio := "2017-10-28"
-	//fecha_fin := "2017-10-19"
+	fecha_fin := "2017-10-29"
 	
 	//roomType = r.Form.Get("room_type")
 	roomType = r.URL.Query().Get("room_type")
 	fecha_inicio = r.URL.Query().Get("arrive_date")
+	fecha_fin = r.URL.Query().Get("leave_date")
 	city = r.URL.Query().Get("city")
+
+	fmt.Println( fecha_inicio + " " + fecha_fin + " "+city+" "+roomType )
 
 	// establecer conexión
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
@@ -145,11 +148,22 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	collection := session.DB("heroku_4r2js6cs").C("reservation")
 	pipeline := []bson.M{  	
 		/* filtro de fechas */
-		bson.M{"$match": bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},	
+		
+		bson.M{"$match": bson.M{ "$or": []bson.M{ bson.M{"start_date":bson.M{"$gte": fecha_fin}}, bson.M{"end_date": bson.M{"$lte": fecha_inicio}} } } },
+		
+		//bson.M{"$match": bson.M{"start_date": bson.M{"$lte": fecha_inicio} }},	
+		
+		//bson.M{"$match": bson.M{ "$or": []bson.M{ bson.M{"hotel_id":"udeain_medellin"}, bson.M{"state": "awaiting"} } } },	
+
+		//bson.M{ "$or": []bson.M{ bson.M{"hotel_id":"udeain_medellin"}, bson.M{"state": "awaiting"} } },
+
+
+		//bson.M{"$match": bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},	
+		//bson.M{"$or": bson.M{ "start_date": bson.M{"$gte": fecha_fin}}},
+		
 		//bson.M{"$match": bson.M{"start_date": bson.M{"$gte": fecha_fin} }},	
 		//bson.M{"$match": {"$or": [{bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},{bson.M{"start_date": bson.M{"$gte": fecha_fin} }}]} },	
 		//bson.M{"$match": bson.M{ "$or": [ bson.M{ "$lte": [ "end_date", fecha_inicio ] }, bson.M{ "$gte": [ "start_date", fecha_fin ] } ] } },
-
 		//{ "$or": [ { "$lte": [ "end_date", fecha_inicio ] }, { "$gte": [ "start_date", fecha_fin ] } ] }
 
 		/*Realizar 'Join' con documentos adicionales de hotel y datos de habitaciones*/			
@@ -246,10 +260,10 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
 func getReservationRequest(w http.ResponseWriter, r *http.Request){
 
-	// establecer conexión
+	// establecer conexión con Base de Datos
 	session, err := mgo.Dial("mongodb://udeain:udeainmongodb@ds157444.mlab.com:57444/heroku_4r2js6cs")
 	if err != nil {
-			panic(err)
+		panic(err)
 	}
 	defer session.Close()
 	session.SetMode(mgo.Monotonic, true)
@@ -278,7 +292,7 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	leave_date := string(salida)
 	leave_date = strings.Replace( leave_date , "\"", "", -1 )
 	salida, _ = json.Marshal(raw["room_type"])
-	room_type := strings.ToLower(string(salida))
+	room_type := strings.ToUpper(string(salida))
 	room_type = strings.Replace( room_type , "\"", "", -1 )
 	salida, _ = json.Marshal(raw["capacity"])
 	capacity := string(salida)
@@ -291,15 +305,6 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	salida, _ = json.Marshal(raw["user"])
 	user := string(salida)
 
-	/*println(arrive_date)
-	println(leave_date)
-	println(room_type)
-	println(capacity)
-	println(hotel_id)
-	println(beds)
-	println(user)
-	println(capacity_number)*/
-
 	// procesar subelemento 'beds'
 	var rawBeds map[string]interface{}
     json.Unmarshal([]byte(beds) , &rawBeds)
@@ -309,8 +314,6 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	salida, _ = json.Marshal(rawBeds["simple"])
 	beds_simple := string(salida)
 	beds_simple = strings.Replace( beds_simple , "\"", "", -1 )
-	/*println(beds_double)
-	println(beds_simple)*/
 
 	// procesar subelemento 'user'
 	var rawUser map[string]interface{}
@@ -328,8 +331,49 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	phone_number := string(salida)
 	phone_number = strings.Replace( phone_number , "\"", "", -1 )
 
-	//println(doc_type + " "+doc_id+" "+email+" "+phone_number)
+	// realizar búsqueda de habitaciones disponibles
+	collection_rooms := session.DB("heroku_4r2js6cs").C("rooms")
+	pipeline := []bson.M{  					
+		bson.M{"$lookup": 
+			bson.M{ "from" :"reservation", "localField": "id", "foreignField": "room_id", "as": "reservation" }},
+		{ "$unwind": bson.M{ "path": "$reservation","preserveNullAndEmptyArrays": true} },	
+		/* realizar filtro de fechas de reserva */	
+		bson.M{"$match": bson.M{ "$or": []bson.M{ bson.M{"reservation.start_date":bson.M{"$gte": leave_date}}, bson.M{"reservation.end_date": bson.M{"$lte": arrive_date}}, bson.M{"reservation" : bson.M{"$eq": nil} } } } },			
+	}
+	pipe := collection_rooms.Pipe(pipeline)
+	resp := []bson.M{}
+	err = pipe.All(&resp)	
+	respuesta, err :=  json.Marshal(resp)
+
+	var datos []bson.M	
+	err = json.Unmarshal(respuesta, &datos)
+
+	if err != nil {
+		fmt.Println("error:", err)
+	}
 	
+	//fmt.Println("habitaciones :", len(datos))
+
+	// validar si hay habitaciones disponibles
+	if( len(datos) == 0 ){		
+		w.WriteHeader(409)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message" : "No hay habitaciones disponibles para el rango de fechas especificado, intente de nuevo"}`))
+		return
+	}
+
+	// obtener id de una habitación disponible
+	var room_id = datos[0]["_id"]	
+	fmt.Println( room_id )
+
+	// validar escogencia de habitación disponible
+	if( room_id == "" || room_id == nil ){		
+		w.WriteHeader(409)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message" : "No hay habitaciones disponibles para el rango de fechas especificado, intente de nuevo"}`))
+		return
+	}
+
 	// validación de errores de datos en json recibido "\"\""
 	if (arrive_date == "" || arrive_date == "null" || leave_date == "" || leave_date == "null" || room_type == "" || 
 		room_type == "null" || capacity == "null" || capacity_number <= 0 || hotel_id =="null" || hotel_id == ""  ||
@@ -341,7 +385,7 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 			w.Header().Set("Content-Type", "application/json")
 			w.Write([]byte(`{"message" : "Los parámetros de la reserva no han sido especificados en su totalidad, o presentan errores de formato"}`))
 			return
-	} else if ( room_type != "s" && room_type != "l" ){
+	} else if ( room_type != "S" && room_type != "L" ){
 		// validar tipo de habitación requerida*/
 		w.WriteHeader(409)
 		w.Header().Set("Content-Type", "application/json")
@@ -355,14 +399,14 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// insertar datos
+	// guardar datos de reserva
 	id_reserva := bson.NewObjectId().Hex()
 	collection.Insert(bson.M{"_id": id_reserva, "start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id,
 	 "room_type": room_type, "capacity": capacity_number, "beds_double": beds_double, "beds_simple": beds_simple, "doc_type": doc_type, "doc_id": doc_id,
-	  "email": email, "phone_number": phone_number, "room_id": "59e14fe3b69a0c883f9c65f7" })
+	  "email": email, "phone_number": phone_number, "room_id": room_id })
 	println("ID reserva generada: " + id_reserva)
 
-	// retornar respuesta de reserva
+	// retornar respuesta de reserva gestionada
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
