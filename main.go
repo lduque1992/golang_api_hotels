@@ -127,7 +127,7 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
 	city := "05001"
 	roomType := "s"
-	fecha_inicio := "2017-10-18"
+	fecha_inicio := "2017-10-20"
 	//fecha_fin := "2017-10-19"
 	
 	//roomType = r.Form.Get("room_type")
@@ -142,7 +142,7 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 	}
 	defer session.Close()
 
-	collection := session.DB("heroku_4r2js6cs").C("rooms_info")
+	collection := session.DB("heroku_4r2js6cs").C("reservation")
 	pipeline := []bson.M{  	
 		/* filtro de fechas */
 		bson.M{"$match": bson.M{"end_date": bson.M{"$lte": fecha_inicio} }},	
@@ -273,15 +273,19 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	// obtener valor en particular  //arrive_date := raw["arrive_date"]
 	salida, _ := json.Marshal(raw["arrive_date"])
 	arrive_date := string(salida)
+	arrive_date = strings.Replace( arrive_date , "\"", "", -1 )
 	salida, _ = json.Marshal(raw["leave_date"])
 	leave_date := string(salida)
+	leave_date = strings.Replace( leave_date , "\"", "", -1 )
 	salida, _ = json.Marshal(raw["room_type"])
-	room_type := string(salida)
+	room_type := strings.ToLower(string(salida))
+	room_type = strings.Replace( room_type , "\"", "", -1 )
 	salida, _ = json.Marshal(raw["capacity"])
 	capacity := string(salida)
 	capacity_number, err := strconv.Atoi(capacity)
 	salida, _ = json.Marshal(raw["hotel_id"])
 	hotel_id := string(salida)
+	hotel_id = strings.Replace( hotel_id , "\"", "", -1 )
 	salida, _ = json.Marshal(raw["beds"])
 	beds := string(salida)
 	salida, _ = json.Marshal(raw["user"])
@@ -301,8 +305,10 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
     json.Unmarshal([]byte(beds) , &rawBeds)
 	salida, _ = json.Marshal(rawBeds["double"])
 	beds_double := string(salida)
+	beds_double = strings.Replace( beds_double , "\"", "", -1 )
 	salida, _ = json.Marshal(rawBeds["simple"])
 	beds_simple := string(salida)
+	beds_simple = strings.Replace( beds_simple , "\"", "", -1 )
 	/*println(beds_double)
 	println(beds_simple)*/
 
@@ -310,35 +316,50 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	var rawUser map[string]interface{}
 	json.Unmarshal([]byte(user) , &rawUser)
 	salida, _ = json.Marshal(rawUser["doc_type"])
-	doc_type := string(salida)
+	doc_type := strings.ToLower(string(salida))
+	doc_type = strings.Replace( doc_type , "\"", "", -1 )
 	salida, _ = json.Marshal(rawUser["doc_id"])
 	doc_id := string(salida)
+	doc_id = strings.Replace( doc_id , "\"", "", -1 )
 	salida, _ = json.Marshal(rawUser["email"])
 	email := string(salida)
+	email = strings.Replace( email , "\"", "", -1 )
 	salida, _ = json.Marshal(rawUser["phone_number"])
 	phone_number := string(salida)
+	phone_number = strings.Replace( phone_number , "\"", "", -1 )
 
 	//println(doc_type + " "+doc_id+" "+email+" "+phone_number)
 	
-	// validación de errores de datos en json recibido
-	if (arrive_date == "\"\"" || arrive_date == "null" || leave_date == "\"\"" || leave_date == "null" || room_type == "\"\"" || 
-		room_type == "null" || capacity == "null" || capacity_number <= 0 || hotel_id =="null" || hotel_id == "\"\""  ||
-		beds_double =="null" || beds_double == "\"\"" || beds_simple =="null" || beds_simple == "\"\"" ||
-		doc_type =="null" || doc_type == "\"\"" || doc_id =="null" || doc_id == "\"\"" || email =="null" || email == "\"\"" ||
-		phone_number =="null" || phone_number == "\"\"" ) {
+	// validación de errores de datos en json recibido "\"\""
+	if (arrive_date == "" || arrive_date == "null" || leave_date == "" || leave_date == "null" || room_type == "" || 
+		room_type == "null" || capacity == "null" || capacity_number <= 0 || hotel_id =="null" || hotel_id == ""  ||
+		beds_double =="null" || beds_double == ""|| beds_simple =="null" || beds_simple == "" ||
+		doc_type =="null" || doc_type == "" || doc_id =="null" || doc_id == "" || email =="null" || email == "" ||
+		phone_number =="null" || phone_number == "" ) {
 
 			w.WriteHeader(409)
 			w.Header().Set("Content-Type", "application/json")
 			w.Write([]byte(`{"message" : "Los parámetros de la reserva no han sido especificados en su totalidad, o presentan errores de formato"}`))
 			return
-	}		
-
+	} else if ( room_type != "s" && room_type != "l" ){
+		// validar tipo de habitación requerida*/
+		w.WriteHeader(409)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message" : "Tipo de habitación no registrada"}`))
+		return
+	} else if ( doc_type != "cc" && doc_type != "pp" && doc_type != "ce" ){ 
+		// validar tipo de documento de identidad cc: cédula ciudananía; pp: pasaporte; ce: cédula extranjería
+		w.WriteHeader(409)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message" : "Tipo de documento no válido. Tipos admitidos: 'cc': cédula ciudananía; 'pp': pasaporte; 'ce': cédula extranjería"}`))
+		return
+	}
 
 	// insertar datos
 	id_reserva := bson.NewObjectId().Hex()
 	collection.Insert(bson.M{"_id": id_reserva, "start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id,
-	 "capacity": capacity_number, "beds_double": beds_double, "beds_simple": beds_simple, "doc_type": doc_type, "doc_id": doc_id, "email": email, "phone_number": phone_number	})
-	println(id_reserva)
+	 "room_type": room_type, "capacity": capacity_number, "beds_double": beds_double, "beds_simple": beds_simple, "doc_type": doc_type, "doc_id": doc_id, "email": email, "phone_number": phone_number	})
+	println("ID reserva generada: " + id_reserva)
 
 	// retornar respuesta de reserva
 	w.Header().Set("Content-Type", "application/json")
