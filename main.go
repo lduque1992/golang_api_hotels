@@ -127,7 +127,7 @@ func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
 
 	city := "05001"
 	roomType := "s"
-	fecha_inicio := "2017-10-20"
+	fecha_inicio := "2017-10-28"
 	//fecha_fin := "2017-10-19"
 	
 	//roomType = r.Form.Get("room_type")
@@ -358,7 +358,8 @@ func getReservationRequest(w http.ResponseWriter, r *http.Request){
 	// insertar datos
 	id_reserva := bson.NewObjectId().Hex()
 	collection.Insert(bson.M{"_id": id_reserva, "start_date":arrive_date, "end_date":leave_date, "state": "awaiting", "host_id": "0045123", "hotel_id": hotel_id,
-	 "room_type": room_type, "capacity": capacity_number, "beds_double": beds_double, "beds_simple": beds_simple, "doc_type": doc_type, "doc_id": doc_id, "email": email, "phone_number": phone_number	})
+	 "room_type": room_type, "capacity": capacity_number, "beds_double": beds_double, "beds_simple": beds_simple, "doc_type": doc_type, "doc_id": doc_id,
+	  "email": email, "phone_number": phone_number, "room_id": "59e14fe3b69a0c883f9c65f7" })
 	println("ID reserva generada: " + id_reserva)
 
 	// retornar respuesta de reserva
