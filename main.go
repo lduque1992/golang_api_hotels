@@ -16,8 +16,10 @@ import (
 )
 
 type Room struct {
-    Id   string
-	Room_type string
+    Hotel_id   string  `json:"hotel_id"`
+	Hotel_name string  `json:"hotel_name"`
+	Hotel_thumbnail string `json:"hotel_thumbnail"`
+	check_in string `json:"check_in"`
 }
 
 type RoomInfo struct {
@@ -97,16 +99,18 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 
 		bson.M{"$lookup": 
 			bson.M{ "from" :"reservation", "localField": "id", "foreignField": "room_id", "as": "reservation" }},
-		{ "$unwind": bson.M{ "path": "$reservation","preserveNullAndEmptyArrays": true} },	
+		{ "$unwind": bson.M{ "path": "$reservation","preserveNullAndEmptyArrays": false} },	
 		/* realizar filtro de fechas de reserva */	
 		bson.M{"$match": bson.M{ "$or": []bson.M{ bson.M{"reservation.start_date":bson.M{"$gte": leaveDate}}, bson.M{"reservation.end_date": bson.M{"$lte": arriveDate}}, bson.M{"reservation" : bson.M{"$eq": nil} } } } },			
+		// omitir datos de reservas
+		bson.M{ "$project" : bson.M{ "reservation" : 0 } },
 	}
 
 	pipe := c.Pipe(pipeline)
 	//resp := []bson.M{}
 	err = pipe.All(&roomsObj)	
 	//respuesta, err :=  json.Marshal(resp)
-
+	
 	///////////////////////////////////////
 
 	//err = c.Find(bson.M{"room_type": roomType, "city":city, "available":true}).All(&roomsObj)
@@ -123,7 +127,8 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 		cityInfo := []byte(`"hotel_id":"udeain_bogota","hotel_name":"udeain bogota", "hotel_location":{"address":"Cra. 14 #82-2 a 82-98", "lat":"4.667662", "long":"-74.0574518"},"hotel_thumbnail":"https://media-cdn.tripadvisor.com/media/photo-s/06/35/93/c2/hotel-el-deportista.jpg","check_in":"15:00","check_out":"13:00","hotel_website":"https://udeain.herokuapp.com", "rooms":`)
 		headerJson = append(headerJson[:], cityInfo...)
 	}
-	respuesta, err :=  json.Marshal(roomsObj)
+	respuesta, err := json.Marshal(roomsObj)	
+
 	jsonEnd := []byte(`}`)
 	if string(respuesta) == "null"{
 		respuesta = []byte(`[]`)
@@ -136,10 +141,19 @@ func getRooms(w http.ResponseWriter, r *http.Request){
 		w.Write([]byte("unable to get room"))
 		return
 	}
+
+	/*var n Room
+	if err2 := json.Unmarshal(finalRes, &n); err != nil {
+		panic(err2)
+	}
+	fmt.Printf("%#v\n", n)
+	fmt.Println( string(finalRes) )*/
 	
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	w.Write(finalRes)
+	//w.Write( []byte(fmt.Sprintf("%v", n)) )
+
 }
 
 func getRoomsAvailable(w http.ResponseWriter, r *http.Request){
